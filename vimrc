@@ -1,4 +1,26 @@
-﻿let s:home = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+let s:home = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+"----------------------------------------------------------------------
+" system detection
+"----------------------------------------------------------------------
+if exists('g:asc_uname')
+	let s:uname = g:asc_uname
+elseif has('win32') || has('win64') || has('win95') || has('win16')
+	let s:uname = 'windows'
+elseif has('win32unix')
+	let s:uname = 'cygwin'
+elseif has('unix')
+	let s:uname = system("echo -n \"$(uname)\"")
+	if !v:shell_error && s:uname == 'Linux'
+		let s:uname = 'linux'
+	elseif v:shell_error == 0 && match(s:uname, 'Darwin') >= 0
+		let s:uname = 'darwin'
+	else
+		let s:uname = 'posix'
+	endif
+else
+	let s:uname = 'posix'
+endif
+
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General
@@ -36,12 +58,6 @@ exec "map <leader>e :e! ".fnameescape(s:home)."/vimrc<cr>"
 "When .vimrc is edited, reload it
 exec "autocmd! bufwritepost ".fnameescape(s:home)."/vimrc source ".fnameescape(s:home)."/vimrc"
 
-func! MySys()
-  return "macww"
-endfunc
-
-set pastetoggle=<F3>
-let g:winManagerWindowLayout='FileExplorer|BufExplorer'
 map <F4> :NERDTreeToggle<cr>
 
 map <F6> :run macros/gdb_mappings.vim<cr>
@@ -50,7 +66,6 @@ map <F8> :tp<cr>
 map <F9> :tn<cr>
 map <F10> :b#<cr>
 
-set background=dark
 highlight Normal guibg = grey90
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -58,22 +73,6 @@ highlight Normal guibg = grey90
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "Enable syntax hl
 syntax enable
-
-if MySys() == "mac"
-  set gfn=Bitstream\ Vera\ Sans\ Mono:h14
-  "set nomacatsui
-  set fileencodings=utf-8,ucs-bom,gb18030,gbk,gb2312,cp936
-  set fileencoding=utf-8
-  set encoding=utf-8
-  set termencoding=utf-8
-  set gfn=Monospace\ 20
-elseif MySys() == "linux"
-  set gfn=Monospace\ 11
-  set fileencodings=utf-8,ucs-bom,gb18030,gbk,gb2312,cp936
-  set fileencoding=utf-8
-  set encoding=utf-8
-  set termencoding=utf-8
-endif
 
 set background=dark
 
@@ -224,87 +223,10 @@ set completeopt=menu
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Command-line config
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-func! Cwd()
-  let cwd = getcwd()
-  return "e " . cwd 
-endfunc
-
-func! DeleteTillSlash()
-  let g:cmd = getcmdline()
-  if MySys() == "linux" || MySys() == "mac"
-    let g:cmd_edited = substitute(g:cmd, "\\(.*\[/\]\\).*", "\\1", "")
-  else
-    let g:cmd_edited = substitute(g:cmd, "\\(.*\[\\\\]\\).*", "\\1", "")
-  endif
-  if g:cmd == g:cmd_edited
-    if MySys() == "linux" || MySys() == "mac"
-      let g:cmd_edited = substitute(g:cmd, "\\(.*\[/\]\\).*/", "\\1", "")
-    else
-      let g:cmd_edited = substitute(g:cmd, "\\(.*\[\\\\\]\\).*\[\\\\\]", "\\1", "")
-    endif
-  endif   
-  return g:cmd_edited
-endfunc
-
-func! CurrentFileDir(cmd)
-  return a:cmd . " " . expand("%:p:h") . "/"
-endfunc
-
-"Smart mappings on the command line
-cno $h e ~/
-cno $d e ~/Desktop/
-cno $j e ./
-
-cno $q <C-\>eDeleteTillSlash()<cr>
-
-cno $c e <C-\>eCurrentFileDir("e")<cr>
-
-cno $tc <C-\>eCurrentFileDir("tabnew")<cr>
-cno $th tabnew ~/
-cno $td tabnew ~/Desktop/
-
 "Bash like
 cnoremap <C-A>		<Home>
 cnoremap <C-E>		<End>
 cnoremap <C-K>		<C-U>
-
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Buffer realted
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"Fast open a buffer by search for a name
-map <c-q> :sb 
-
-"Open a dummy buffer for paste
-map <leader>q :e ~/buffer<cr>
-
-"Restore cursor to file position in previous editing session
-set viminfo='10,\"100,:20,%,n~/.viminfo
-au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
-
-" Buffer - reverse everything ... :)
-
-" Don't close window, when deleting a buffer
-command! Bclose call <SID>BufcloseCloseIt()
-
-function! <SID>BufcloseCloseIt()
-   let l:currentBufNum = bufnr("%")
-   let l:alternateBufNum = bufnr("#")
-
-   if buflisted(l:alternateBufNum)
-     buffer #
-   else
-     bnext
-   endif
-
-   if bufnr("%") == l:currentBufNum
-     new
-   endif
-
-   if buflisted(l:currentBufNum)
-     execute("bdelete! ".l:currentBufNum)
-   endif
-endfunction
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -388,9 +310,6 @@ map <c-g> <c-l><c-j>:q<cr>:botright cw 10<cr>
 "Remove the Windows ^M
 noremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
 
-"Paste toggle - when pasting something in, don't indent.
-set pastetoggle=<F3>
-
 "Super paste
 inoremap <C-v> <esc>:set paste<cr>mui<C-R>+<esc>mv'uV'v=:set nopaste<cr>
 
@@ -407,6 +326,10 @@ set switchbuf="useopen"
 set previewheight=12
 
 "set bomb
+set fileencodings=utf-8,ucs-bom,gb18030,gbk,gb2312,cp936
+set fileencoding=utf-8
+set encoding=utf-8
+set termencoding=utf-8
 
 if !exists('g:bundle_group')
 	let g:bundle_group=[]
@@ -420,3 +343,17 @@ exec 'source '.fnameescape(s:home).'/keymap.vim'
 exec 'source '.fnameescape(s:home).'/config.vim'
 "VimImport fnameescape(s:home).'/bundle.vim'
 set statusline+=%{gutentags#statusline('[',']')}
+
+if s:uname == 'windows'
+	"解决菜单乱码  
+	  
+	source $VIMRUNTIME/delmenu.vim  
+	  
+	source $VIMRUNTIME/menu.vim  
+	  
+	"解决consle输出乱码  
+	  
+	language messages zh_CN.utf-8
+endif
+
+"let g:gutentags_trace=1

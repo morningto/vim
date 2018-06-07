@@ -32,3 +32,8 @@ colorscheme molokai
 let g:UltiSnipsExpandTrigger="<c-j>"
 let g:UltiSnipsJumpForwardTrigger="<c-j>"
 let g:UltiSnipsJumpBackwardTrigger="<c-b>"
+
+"----------------------------------------------------------------------
+" python
+"----------------------------------------------------------------------
+let g:python_recommended_style=0
