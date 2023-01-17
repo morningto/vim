@@ -156,7 +156,7 @@ let g:Lf_NormalMap = {
 " ack
 "----------------------------------------------------------------------
 if executable('ag')
-  let g:ackprg = 'ag --vimgrep'
+  let g:ackprg = 'ag --vimgrep --skip-vcs-ignores'
 endif
 
 "----------------------------------------------------------------------

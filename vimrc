@@ -356,4 +356,4 @@ if s:uname == 'windows'
 	language messages zh_CN.utf-8
 endif
 
-"let g:gutentags_trace=1
+let g:gutentags_trace=0
